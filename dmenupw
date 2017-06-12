@@ -1,0 +1,180 @@
+#!/bin/bash
+# Code below uses GPLV3 license. 
+# See license file for more details
+
+#---------
+#settings
+#---------
+#directory for storing the password files
+PW_DIR=~/.pwd
+#editor for editing/adding pw file
+EDITOR=nano
+#terminal to use for reading password
+TERM="xterm -e"
+#automatically git push on modify/add
+GIT=true
+#cipher to use for encryption / decryption
+CIPHER="aes256"
+#---------
+
+
+
+
+
+
+
+#init menu options
+INITLIST=(
+	" Select password file\n"
+	"Add password file\n"
+	"Modify password file\n"
+	"Git push\n"
+	)
+
+
+function getpw {
+	PW_TEMP=$(mktemp -t ".PWDMODXXXXXXXXXX")
+	e="read -s -p \"password: \" ppw; echo "'"$ppw" >>'"$PW_TEMP"
+	$TERM "$e"
+	realpw=$(cat "$PW_TEMP" && rm "$PW_TEMP")
+	[[ -z $realpw ]] && exit 1;
+	exec 3<<<"$realpw"
+	realpw=""
+}
+
+
+
+
+function handleGit {
+	if git diff-index --quiet HEAD --; then 
+		echo "no changes."
+	else
+		cPwd=$(pwd)
+		cd $PW_DIR
+		D=$(date)
+		git add ./*
+		git commit -m "Automatic commit - $D"
+		git push -u origin master
+		cd $cPwd
+	fi
+}
+
+function goGit {
+	if GIT; then
+		handleGit
+	fi
+}
+
+function dmenuRender {
+	RET=$(printf "$DM_DATA" | dmenu -p "$HINT" -l 25)
+	[[ -z $RET ]] && exit 0;
+}
+
+
+if [ ! -d "$PW_DIR" ]; then
+	echo "$PW_DIR does not exist, making it.";
+	mkdir $PW_DIR;
+fi
+
+
+#init menu
+DM_DATA=$(printf "${INITLIST[*]}")
+HINT="do you want to:"
+dmenuRender
+
+
+
+
+if echo $RET | grep "Select"; then 
+
+	#select file to handle
+	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$")
+	HINT="Select password file";
+	dmenuRender
+	PW_FILE=$RET
+
+	#get password
+	HINT="password:"
+	while true; do
+		getpw
+
+		PWLIST=$(openssl enc -"$CIPHER" -in "$PW_DIR/$PW_FILE" -d -pass fd:3);
+		exec 3>&-
+		if [[ ! $PWLIST ]]; then 
+			HINT="Wrong password, try again";
+		else
+			break;
+		fi
+	done
+
+
+	#show passwords
+	DM_DATA=$(echo "$PWLIST" | tr " " "\n")
+	HINT="Select password to copy"
+	dmenuRender
+
+	#copy selected to clipboard
+	for selection in clipboard primary; do
+		echo $RET | tr -d "\n" | xsel -i --"$selection"
+	done
+elif echo $RET | grep "Add"; then 
+	#new file name
+	DM_DATA="";
+	HINT="Name of file"
+	dmenuRender
+	NEWFILE=$RET;
+
+	#pw
+	getpw
+
+	#tmp file for editing
+	TEMPFILE=$(mktemp -t ".PWDMODXXXXXXXXXX")
+	$TERM "$EDITOR $TEMPFILE"
+
+	#rm new file & get contents
+	NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
+
+	#write
+	echo $NEWDATA | openssl enc -"$CIPHER" -out "$PW_DIR/$NEWFILE" -pass fd:3
+	exec 3>&-
+
+
+	#autogit
+	goGit
+elif echo $RET | grep "Modify"; then
+
+	#pw file select
+	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$")
+	HINT="select password file"
+	dmenuRender
+	FILE=$RET;
+
+	HINT="password:"
+	while true; do
+		getpw
+		read -u 3 TPW
+		exec 3>&-
+
+		PWLIST=$(exec 3<<<"$TPW" && openssl enc -"$CIPHER" -in "$PW_DIR/$FILE" -d -pass fd:3);
+		exec 3>&-
+
+		if [[ ! $PWLIST ]]; then 
+			HINT="Wrong password, try again";
+		else
+			break;
+		fi
+	done
+
+	TEMPFILE=$(mktemp -t ".PWDMODXXXXXXXXXX")
+	echo "$PWLIST" >> "$TEMPFILE" && $TERM "$EDITOR $TEMPFILE"
+
+	NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
+	exec 3<<<"$TPW" && echo "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$FILE" -pass fd:3
+	exec 3>&-
+	
+	goGit
+elif echo $RET | grep "Git"; then
+	handleGit
+fi
+
+exit 0;
