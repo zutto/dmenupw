@@ -88,7 +88,7 @@ dmenuRender
 if echo $RET | grep "Select"; then 
 
 	#select file to handle
-	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$")
+	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$" | grep -v -i "^.git$")
 	HINT="Select password file";
 	dmenuRender
 	PW_FILE=$RET
@@ -144,7 +144,7 @@ elif echo $RET | grep "Add"; then
 elif echo $RET | grep "Modify"; then
 
 	#pw file select
-	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$")
+	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$" | grep -v -i "^.git$")
 	HINT="select password file"
 	dmenuRender
 	FILE=$RET;
