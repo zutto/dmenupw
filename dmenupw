@@ -10,7 +10,7 @@ PW_DIR=~/.pwd
 #editor for editing/adding pw file
 EDITOR=nano
 #terminal to use for reading password
-TERM="xterm -e"
+TERM="xterm -bg black -fg white +sb -e"
 #cipher to use for encryption / decryption
 CIPHER="aes256"
 
@@ -38,6 +38,7 @@ GITAUTOPULL=true
 #init menu options
 INITLIST=(
 	" Select password file\n"
+	"Open password file in term\n"
 	"Add password file\n"
 	"Modify password file\n"
 	"Git push all files\n"
@@ -130,18 +131,12 @@ function cdHandleExit {
 function handleGit {
 	cdHandleGo
 
-	if git diff-index --quiet HEAD --; then 
-		echo "no changes. x"
-	else
-		
+	D=$(date)
+	git add ./*
+	git commit -m "Automatic commit - $D"
+	git push -u origin master
 
-		D=$(date)
-		git add ./*
-		git commit -m "Automatic commit - $D"
-		git push -u origin master
 
-		
-	fi
 	cdHandleExit
 }
 
@@ -226,6 +221,33 @@ if echo $RET | grep "Select"; then
 	for selection in clipboard primary; do
 		echo $RET | tr -d "\n" | xsel -i --"$selection"
 	done
+elif echo $RET | grep "Open password file"; then
+
+	#pw file select
+	DM_DATA=$(ls -1a "$PW_DIR" |grep -v -E "^[\.]{0,2}$" | grep -v -i "^.git$")
+	HINT="select password file"
+	dmenuRender
+	FILE=$RET;
+
+	HINT="password:"
+	while true; do
+		getpw
+
+		PWLIST=$(openssl enc -"$CIPHER" -in "$PW_DIR/$FILE" -d -pass fd:3);
+		exec 3>&-
+
+		if [[ ! $PWLIST ]]; then 
+			HINT="Wrong password, try again";
+		else
+			break;
+		fi
+	done
+
+	TEMPFILE=$(mktemp -t ".PWDMODXXXXXXXXXX")
+	echo "$PWLIST" >> "$TEMPFILE" && $TERM "$EDITOR $TEMPFILE"
+	rm $TEMPFILE
+
+
 elif echo $RET | grep "Add"; then 
 	#new file name
 	DM_DATA="";
@@ -241,10 +263,11 @@ elif echo $RET | grep "Add"; then
 	$TERM "$EDITOR $TEMPFILE"
 
 	#rm new file & get contents
-	NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
+	#NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
 
 	#write
-	printf "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$NEWFILE" -pass fd:3
+	openssl enc -"$CIPHER" -in "$TEMPFILE" -out "$PW_DIR/$NEWFILE" -pass fd:3
+	rm "$TEMPFILE"
 	exec 3>&-
 
 	MOD_FILE=$NEWFILE
