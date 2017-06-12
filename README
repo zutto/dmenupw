@@ -1,6 +1,7 @@
 Requirements:
 * Openssl
 * dmenu
+* xsel
 
 
 todo:
