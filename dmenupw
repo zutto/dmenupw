@@ -11,11 +11,23 @@ PW_DIR=~/.pwd
 EDITOR=nano
 #terminal to use for reading password
 TERM="xterm -e"
-#automatically git push on modify/add
-GIT=true
 #cipher to use for encryption / decryption
 CIPHER="aes256"
+
 #---------
+# git stuff
+#---------
+#do note: you need to manually initialize/clone/whatever the git repo in $PW_DIR
+#automatically add change commits
+GIT=false
+#automatically push to git remote
+GITAUTOPUSH=true
+#automatically pull if remote is more updated
+#this might not work as expected, the pull is sent to background when run.
+#I recommend running git pull from the option instead.
+GITAUTOPULL=true
+#---------
+
 
 
 
@@ -28,7 +40,9 @@ INITLIST=(
 	" Select password file\n"
 	"Add password file\n"
 	"Modify password file\n"
+	"Git push all files\n"
 	"Git push\n"
+	"Git pull\n"
 	)
 
 
@@ -42,27 +56,118 @@ function getpw {
 	realpw=""
 }
 
+function handleGitAutoPull {
+	if ! $GIT; then
+		return;
+	fi
 
+	if ! $GITAUTOPULL; then
+		return;
+	fi
+	cdHandleGo
+	git remote update
+	STATE=$(git status -uno| grep "Your branch is behind")
+	if [[ ! $STATE ]]; then 
+		#no changes
+		echo "no changes"
+	else
+		handleGitPull
+	fi
+	cdHandleExit
+}
 
+function handleGitPull {
+	cdHandleGo
+	
+	git pull origin master
+
+	cdHandleExit
+}
+
+function gitAdd {
+
+	if ! $GIT; then
+		return
+	fi
+	cdHandleGo
+	echo "adding ./$MOD_FILE"
+	git add "./$MOD_FILE";
+	gitCommit
+
+	cdHandleExit
+}
+
+function gitCommit {
+
+	cdHandleGo
+
+	D=$(date)
+
+	CMSG="Automatic commit - $D"
+	CMSG+="\n$USER@$(hostname)"
+
+	if [[ -z $MOD_FILE ]]; then
+		if [[ -z $ADDED ]]; then 
+			CMSG+="\nAdded file $MOD_FILE";
+		else 
+			CMSG+="\nModified file $MOD_FILE";
+		fi
+
+	fi
+	git commit -m "$CMSG"
+	cdHandleExit
+}
+
+function cdHandleGo {
+	cPwd=$(pwd)
+	cd $PW_DIR
+}
+
+function cdHandleExit {
+	cd $cPwd
+}
 
 function handleGit {
+	cdHandleGo
+
 	if git diff-index --quiet HEAD --; then 
-		echo "no changes."
+		echo "no changes. x"
 	else
-		cPwd=$(pwd)
-		cd $PW_DIR
+		
+
 		D=$(date)
 		git add ./*
 		git commit -m "Automatic commit - $D"
 		git push -u origin master
-		cd $cPwd
+
+		
 	fi
+	cdHandleExit
+}
+
+function handleGitPush {
+	cdHandleGo
+	STATE=$(git status -uno| grep "Your branch is ahead")
+	if [[ ! $STATE ]]; then 
+		echo "no changes."
+	else
+		
+		echo "pushing to master"
+		git push -u origin master
+
+		
+	fi
+	cdHandleExit
 }
 
 function goGit {
-	if GIT; then
-		handleGit
+	if $GIT; then
+		if $GITAUTOPUSH; then
+			echo "git push"
+			handleGitPush
+		fi
 	fi
+
 }
 
 function dmenuRender {
@@ -77,10 +182,14 @@ if [ ! -d "$PW_DIR" ]; then
 fi
 
 
+handleGitAutoPull &
+
 #init menu
 DM_DATA=$(printf "${INITLIST[*]}")
 HINT="do you want to:"
 dmenuRender
+
+
 
 
 
@@ -135,10 +244,12 @@ elif echo $RET | grep "Add"; then
 	NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
 
 	#write
-	echo $NEWDATA | openssl enc -"$CIPHER" -out "$PW_DIR/$NEWFILE" -pass fd:3
+	printf "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$NEWFILE" -pass fd:3
 	exec 3>&-
 
-
+	MOD_FILE=$NEWFILE
+	ADDED=true #added
+	gitAdd 
 	#autogit
 	goGit
 elif echo $RET | grep "Modify"; then
@@ -169,12 +280,19 @@ elif echo $RET | grep "Modify"; then
 	echo "$PWLIST" >> "$TEMPFILE" && $TERM "$EDITOR $TEMPFILE"
 
 	NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
-	exec 3<<<"$TPW" && echo "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$FILE" -pass fd:3
+	exec 3<<<"$TPW" && printf "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$FILE" -pass fd:3
 	exec 3>&-
 	
+	MOD_FILE=$NEWFILE
+	ADDED=false #modified
+	gitAdd
 	goGit
-elif echo $RET | grep "Git"; then
+elif echo $RET | grep "Git push all files"; then
 	handleGit
+elif echo $RET | grep "Git push"; then
+	handleGitPush
+elif echo $RET | grep "Git pull"; then
+	handleGitPull
 fi
 
 exit 0;
