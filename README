@@ -4,19 +4,24 @@
 This is a tiny script to encrypt & decrypt files in conveniently.
 I made it to be a 'password manager', somewhere to store credentials for different services conveniently, but I already use it for much more than that.
 
+## Features
+* uses dmenu as a gui to encode / decode data
+* git support for pulling/pushing encoded files (needs testing)
 
 ### Security
 The files are encrypted with your own cipher of choice (CIPHER variable on top of the code).
 So the files are always as secure as your password is.
 
 However, this is script itself is technically vulnerable to targetted timed attacks, use only on computers that you trust, this is what we pay for convenience.
-If you really need to access the files and dont trust the machine, just use openssl to decode the files directly (openssl enc -CIPHER -d -in ~/PW_DIR/<file>), doing the decoding this way is still vulnerable to targetted attacks, but this would be 
-much more difficult attack vector for the red team.
+If you really need to access the files and dont trust the machine, just use openssl to decode the files directly (openssl enc -CIPHER -d -in ~/PW_DIR/<file>), doing the decoding this way is still vulnerable to targetted attacks, but this would be much more difficult attack vector for the red team.
 
 
 
 ### Install
-Modify the variables to your liking on top of the file, and copy the script over to your favorite user binary location (commonly /usr/local/bin/ is used).
+1. Modify the variables to your liking at the top of the script
+2. copy the binary over to your favorite binary location ( /usr/local/bin/ is commonly used for user binaries)
+3. (optional) clone/init/whatever your git repo at $PW_DIR (defined at the top of the file on step 1.)
+
 
 
 #### Requirements:
@@ -30,9 +35,7 @@ Modify the variables to your liking on top of the file, and copy the script over
 
 
 
-
 ---
 todo:
 * fix openssl decryption wrong password detection
 * more testing
-
