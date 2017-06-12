@@ -19,13 +19,13 @@ CIPHER="aes256"
 #---------
 #do note: you need to manually initialize/clone/whatever the git repo in $PW_DIR
 #automatically add change commits
-GIT=true
+GIT=false
 #automatically push to git remote
-GITAUTOPUSH=true
+GITAUTOPUSH=false
 #automatically pull if remote is more updated
 #this might not work as expected, the pull is sent to background when run.
 #I recommend running git pull from the option instead.
-GITAUTOPULL=true
+GITAUTOPULL=false
 #---------
 
 
