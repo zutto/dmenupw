@@ -19,7 +19,7 @@ CIPHER="aes256"
 #---------
 #do note: you need to manually initialize/clone/whatever the git repo in $PW_DIR
 #automatically add change commits
-GIT=false
+GIT=true
 #automatically push to git remote
 GITAUTOPUSH=true
 #automatically pull if remote is more updated
@@ -104,17 +104,17 @@ function gitCommit {
 	D=$(date)
 
 	CMSG="Automatic commit - $D"
-	CMSG+="\n$USER@$(hostname)"
+	CMSG+="\nSource: $USER@$(hostname)"
 
-	if [[ -z $MOD_FILE ]]; then
+	if [[ ! -z $MOD_FILE ]]; then
 		if [[ -z $ADDED ]]; then 
-			CMSG+="\nAdded file $MOD_FILE";
+			CMSG+="\nAdded file: '$MOD_FILE'";
 		else 
-			CMSG+="\nModified file $MOD_FILE";
+			CMSG+="\nModified file: '$MOD_FILE'";
 		fi
 
 	fi
-	git commit -m "$CMSG"
+	git commit -m "$(printf "$CMSG")"
 	cdHandleExit
 }
 
