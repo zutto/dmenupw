@@ -22,7 +22,7 @@ options:
 
 uninstall:
 	@echo "Removing binary from $(INSTALL_LOCATION)"
-	@rm $(INSTALL_LOCATION)/$(BINARY_NAME)
+	@rm $(INSTALL_LOCATION)/$(TARGET_BINARY_NAME)
 	@echo "Done."
 
 
