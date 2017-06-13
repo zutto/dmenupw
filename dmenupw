@@ -213,7 +213,7 @@ if echo $RET | grep "Select"; then
 
 
 	#show passwords
-	DM_DATA=$(echo "$PWLIST" | tr " " "\n")
+	DM_DATA=$(echo "$PWLIST");
 	HINT="Select password to copy"
 	dmenuRender
 
