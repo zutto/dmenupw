@@ -19,8 +19,9 @@ If you really need to access the files and dont trust the machine, just use open
 
 ### Install
 1. Modify the variables to your liking at the top of the script
-2. copy the binary over to your favorite binary location ( /usr/local/bin/ is commonly used for user binaries)
-3. (optional) clone/init/whatever your git repo at $PW_DIR (defined at the top of the file on step 1.)
+2. Modify the variables in config.mk
+3. run make install (with enough permissions according to the target folder)
+4. (optional) clone/init/whatever your git repo at $PW_DIR (defined at the top of the file on step 1.)
 
 
 
@@ -29,7 +30,7 @@ If you really need to access the files and dont trust the machine, just use open
 2. Openssl
 3. dmenu
 4. xsel (optional if you dont want to copy anything)
-
+5. make (optional, you can use the binary as is, makefile is just for convenient install. In other words, just for copying the file.)
 
 
 
