@@ -306,7 +306,7 @@ elif echo $RET | grep "Modify"; then
 	exec 3<<<"$TPW" && printf "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$FILE" -pass fd:3
 	exec 3>&-
 	
-	MOD_FILE=$NEWFILE
+	MOD_FILE=$FILE
 	ADDED=false #modified
 	gitAdd
 	goGit
