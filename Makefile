@@ -26,7 +26,7 @@ uninstall:
 	@echo "Done."
 
 
-install :
+install:
 	@echo "Installing binary"
 	@cp $(SRC_BINARY_NAME) $(INSTALL_LOCATION)/$(TARGET_BINARY_NAME)
 	@chmod 755 $(INSTALL_LOCATION)/$(TARGET_BINARY_NAME)
