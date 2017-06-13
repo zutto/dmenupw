@@ -302,8 +302,9 @@ elif echo $RET | grep "Modify"; then
 	TEMPFILE=$(mktemp -t ".PWDMODXXXXXXXXXX")
 	echo "$PWLIST" >> "$TEMPFILE" && $TERM "$EDITOR $TEMPFILE"
 
-	NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
-	exec 3<<<"$TPW" && printf "$NEWDATA" | openssl enc -"$CIPHER" -out "$PW_DIR/$FILE" -pass fd:3
+	#NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
+	exec 3<<<"$TPW" && openssl enc -"$CIPHER" -in $TEMPFILE -out "$PW_DIR/$FILE" -pass fd:3;
+	rm $TEMPFILE
 	exec 3>&-
 	
 	MOD_FILE=$FILE
