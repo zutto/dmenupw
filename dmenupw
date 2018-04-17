@@ -202,7 +202,7 @@ if echo $RET | grep "Select"; then
 	while true; do
 		getpw
 
-		PWLIST=$(openssl enc -"$CIPHER" -in "$PW_DIR/$PW_FILE" -d -pass fd:3);
+		PWLIST=$(openssl enc -md md5 -"$CIPHER" -in "$PW_DIR/$PW_FILE" -d -pass fd:3);
 		exec 3>&-
 		if [[ ! $PWLIST ]]; then 
 			HINT="Wrong password, try again";
@@ -233,7 +233,7 @@ elif echo $RET | grep "Open password file"; then
 	while true; do
 		getpw
 
-		PWLIST=$(openssl enc -"$CIPHER" -in "$PW_DIR/$FILE" -d -pass fd:3);
+		PWLIST=$(openssl enc -md md5 -"$CIPHER" -in "$PW_DIR/$FILE" -d -pass fd:3);
 		exec 3>&-
 
 		if [[ ! $PWLIST ]]; then 
@@ -266,7 +266,7 @@ elif echo $RET | grep "Add"; then
 	#NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
 
 	#write
-	openssl enc -"$CIPHER" -in "$TEMPFILE" -out "$PW_DIR/$NEWFILE" -pass fd:3
+	openssl enc -md md5 -"$CIPHER" -in "$TEMPFILE" -out "$PW_DIR/$NEWFILE" -pass fd:3
 	rm "$TEMPFILE"
 	exec 3>&-
 
@@ -289,7 +289,7 @@ elif echo $RET | grep "Modify"; then
 		read -u 3 TPW
 		exec 3>&-
 
-		PWLIST=$(exec 3<<<"$TPW" && openssl enc -"$CIPHER" -in "$PW_DIR/$FILE" -d -pass fd:3);
+		PWLIST=$(exec 3<<<"$TPW" && openssl enc -md md5 -"$CIPHER" -in "$PW_DIR/$FILE" -d -pass fd:3);
 		exec 3>&-
 
 		if [[ ! $PWLIST ]]; then 
@@ -303,7 +303,7 @@ elif echo $RET | grep "Modify"; then
 	echo "$PWLIST" >> "$TEMPFILE" && $TERM "$EDITOR $TEMPFILE"
 
 	#NEWDATA=$(cat $TEMPFILE && rm $TEMPFILE);
-	exec 3<<<"$TPW" && openssl enc -"$CIPHER" -in $TEMPFILE -out "$PW_DIR/$FILE" -pass fd:3;
+	exec 3<<<"$TPW" && openssl enc -md md5 -"$CIPHER" -in $TEMPFILE -out "$PW_DIR/$FILE" -pass fd:3;
 	rm $TEMPFILE
 	exec 3>&-
 	
